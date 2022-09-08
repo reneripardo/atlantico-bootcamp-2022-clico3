@@ -4,6 +4,7 @@ import numpy as np
 def ContoursAreaSegmentation(image_binary):
     contours, hierarchy = cv2.findContours(image_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     all_areas=[]
+    
     for cnt in contours:
         area= cv2.contourArea(cnt)
         all_areas.append(area)

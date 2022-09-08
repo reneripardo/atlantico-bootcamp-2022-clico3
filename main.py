@@ -26,7 +26,7 @@ def main():
     image_input = load_image(args['path_image'], 0)
     image_input2 = load_image(args['path_image2'], 0)
 
-    #--------> pre processing
+    #--------> example pre processing
     image_mean_filter = mean_filter(image_input, 5)
     image_median_filter = median_filter(image_input, 5)
     image_gaussian_filter = gaussian_filter(image_input, 5)
@@ -34,6 +34,8 @@ def main():
 
     # Equalization
     image_equ = equalize_Hist(image_input2)
+
+    #--------> example segmentation
 
     # Otsu's thresholding
     _, image_input_otsu = threshold(image_input2)
@@ -54,24 +56,20 @@ def main():
     plt.subplot(222), plt.imshow(image_equ, cmap='gray')
     plt.title('Com equalização'), plt.xticks([]), plt.yticks([])
     plt.subplot(223), plt.imshow(image_input_otsu, cmap='gray')
-    plt.title('Limiarização com Otsu \n na imagem original'), plt.xticks([]), plt.yticks([])
+    plt.title('Segmentação com Otsu \n na imagem original'), plt.xticks([]), plt.yticks([])
     plt.subplot(224), plt.imshow(image_equ_otsu, cmap='gray')
-    plt.title('Limiarização com Otsu \n na imagem com equalização'), plt.xticks([]), plt.yticks([])
+    plt.title('Segmentação com Otsu \n na imagem com equalização'), plt.xticks([]), plt.yticks([])
     plt.show()
 
-
-    #--------> segemtnation
     image_seg = ContoursAreaSegmentation(image_input_otsu)
 
-    plt.subplot(121), plt.imshow(image_input2, cmap='gray')
+    plt.subplot(131), plt.imshow(image_input2, cmap='gray')
     plt.title('Imagem original'), plt.xticks([]), plt.yticks([])
-    plt.subplot(122), plt.imshow(image_input_otsu, cmap='gray')
-    plt.title('xx'), plt.xticks([]), plt.yticks([])
-    plt.subplot(123), plt.imshow(image_input_otsu, cmap='gray')
-    plt.title('xx'), plt.xticks([]), plt.yticks([])
+    plt.subplot(132), plt.imshow(image_input_otsu, cmap='gray')
+    plt.title('Segmentação com Otsu \n na imagem original'), plt.xticks([]), plt.yticks([])
+    plt.subplot(133), plt.imshow(image_seg, cmap='gray')
+    plt.title('Segmentação final pelo contorno \n de maior area interna'), plt.xticks([]), plt.yticks([])
     plt.show()
-
-
 
 
 if __name__ == "__main__":
