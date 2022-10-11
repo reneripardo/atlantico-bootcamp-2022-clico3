@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from skimage.measure import label
+from skimage.morphology import convex_hull_image
 
 def ContoursAreaSegmentation(image_binary):
     contours, hierarchy = cv2.findContours(image_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -189,3 +191,88 @@ def region_grow3D(array_imgCR, point_x, point_y, tom_max, tom_min):
 
         cont += 1
     return array_img_seg
+
+def nodule_location(image_bin_nodule):
+    """Nodule location due to the presence of pleura.
+        Arguments:
+            image_bin_nodule {numpy.array} -- 2D binary (0 or 1) image of the nodule.
+        Returns:
+            value {int} -- 0 -> non-juxtaural nodule,
+                           1 -> juxtapleural nodule.
+    """
+    image_borders = np.ones_like(image_bin_nodule)
+    image_borders[1:-1,1:-1,1:-1] = 0
+    area_border = np.count_nonzero(image_borders)
+    del image_borders
+
+    ind_non_zeros = np.where(image_bin_nodule != 0)
+    cont_area = 0
+    shape_y = image_bin_nodule.shape[0]
+    shape_x = image_bin_nodule.shape[1]
+    for i in range(len(ind_non_zeros[0])):
+        z = ind_non_zeros[0][i]
+        y = ind_non_zeros[1][i]
+        x = ind_non_zeros[2][i]
+
+        if y==0 or y==shape_y-1 or x==0 or x == shape_x-1:
+            cont_area+=1
+
+    del ind_non_zeros
+    if cont_area >= 0.1*area_border:
+        return 1
+    return 0
+
+def get_convex_hull_image(array_image):
+    """apply convex hull in image.
+        Arguments:
+            array_image {numpy.array} -- input 3D image.
+        Returns:
+            array_image_convex_hull {numpy.array} -- 3D image.
+    """
+    array_image_convex_hull = np.zeros(array_image.shape, 'float64')
+    array_image_convex_hull = convex_hull_image(array_image)
+
+    return array_image_convex_hull
+
+def component_largest_connected(array_image):
+    """get component largest connected.
+        Arguments:
+            array_image {numpy.array} -- input image.
+        Returns:
+            image_component_largest_connected {numpy.array} -- array image binary (component largest connected).
+    """
+    array_image[array_image != 0] = 1
+    labels = label(array_image)
+    image_component_largest_connected = labels == np.argmax(np.bincount(labels.flat, weights=array_image.flat))
+    image_component_largest_connected.dtype = np.uint8
+
+    return image_component_largest_connected
+
+def get_pleura_nodule(array_image):
+    """ get pleura nodule.
+        Arguments:
+            array_image {numpy.array} -- input image binary.
+        Returns:
+            array_image_pleura {numpy.array} -- thresholded image of the pleura.
+    """
+    array_nzero = np.array(array_image)
+
+    array_complement_n_zero = array_nzero.max() - array_image
+
+    if array_complement_n_zero.max() != 0:
+        array_negative_nzero_largest_component = component_largest_connected(array_complement_n_zero)
+
+        array_n_two = np.array(array_nzero*get_convex_hull_image(array_negative_nzero_largest_component))
+
+        array_image_pleura = np.array(array_n_two.max() - array_n_two)*array_image
+
+        return array_image_pleura
+    else:
+        return np.zeros(array_image.shape, np.uint8)
+
+def pipleline(array_image):
+    pleura = nodule_location(array_image)
+    if pleura is True:
+          return get_pleura_nodule(array_image)
+    return array_image
+
