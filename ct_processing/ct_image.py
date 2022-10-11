@@ -140,25 +140,26 @@ def morpho_close(image_in, kernel=3):
     image_out = cv2.morphologyEx(image_in, cv2.MORPH_CLOSE, np.ones((kernel,kernel),np.uint8))
     return image_out
 
-def region_grow3D(array_imgCR, point_y, point_x, tom_max, tom_min):
+def region_grow3D(array_imgCR, point_x, point_y, tom_max, tom_min):
     """
     Application of the regional growth technique.
           Arguments:
-              array_img {numpy.array} -- original images.
-              point_y {int} -- image line coordinate that has a seed.
-              point_x {int} -- image column coordinate that has a seed.
+              array_img {numpy.array} -- original image.
+              point_y {list} -- lista com as coordenadas das linhas.
+              point_x {list} -- lista com as coordenadas das colunas.
+              tom_max {int}  -- tom de cinza maior ou igual da semente.
+              tom_min {int}  -- tom de cinza menor ou igual da semente.
           Returns:
-              array_img_seg {numpy.array} -- binary image with zero background
-                                             and region of interest with one.
+              array_img_seg {numpy.array} -- segemntação.
     """
 
     #zeros image for 3D targeting
     array_img_seg = np.zeros(array_imgCR.shape).astype(np.uint8)
 
     #kernel for one-pixel neighborhood
-    array8u = np.array([[0, 1, 0],
+    array8u = np.array([[1, 1, 1],
                         [1, 0, 1],
-                        [0, 1, 0]], dtype=int)
+                        [1, 1, 1]], dtype=int)
 
     #set image coordinates with non-zero gray (slice, line and column)
     row = []
@@ -170,14 +171,13 @@ def region_grow3D(array_imgCR, point_y, point_x, tom_max, tom_min):
         array_img_seg[row[len_array_seed], col[len_array_seed]] = 1
 
     cont = 0
-
     while cont < len(row):
         if np.abs(array_imgCR.size-len(point_y)) == cont:
             break
         for i in range(-1, 2):
-            if (row[cont] + i > 0) and (row[cont] + i < (array_img_seg.shape[1]-1)):
+            if (row[cont] + i > 0) and (row[cont] + i < (array_img_seg.shape[0]-1)):
                 for j in range(-1, 2):
-                    if (col[cont]+j > 0) and (col[cont]+j < (array_img_seg.shape[2]-1)):  # nao ir nas bordas
+                    if (col[cont]+j > 0) and (col[cont]+j < (array_img_seg.shape[1]-1)):  # nao ir nas bordas
                         if (array_imgCR[row[cont] + i, col[cont] + j] <= tom_max) and \
                            (array_imgCR[row[cont] + i, col[cont] + j] >= tom_min) and \
                            (array_img_seg[row[cont] + i, col[cont] + j] == 0) and \
