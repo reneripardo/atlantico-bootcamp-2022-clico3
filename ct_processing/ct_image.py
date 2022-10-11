@@ -139,3 +139,53 @@ def morpho_close(image_in, kernel=3):
     """
     image_out = cv2.morphologyEx(image_in, cv2.MORPH_CLOSE, np.ones((kernel,kernel),np.uint8))
     return image_out
+
+def region_grow3D(array_imgCR, point_y, point_x, tom_max, tom_min):
+    """
+    Application of the regional growth technique.
+          Arguments:
+              array_img {numpy.array} -- original images.
+              point_y {int} -- image line coordinate that has a seed.
+              point_x {int} -- image column coordinate that has a seed.
+          Returns:
+              array_img_seg {numpy.array} -- binary image with zero background
+                                             and region of interest with one.
+    """
+
+    #zeros image for 3D targeting
+    array_img_seg = np.zeros(array_imgCR.shape).astype(np.uint8)
+
+    #kernel for one-pixel neighborhood
+    array8u = np.array([[0, 1, 0],
+                        [1, 0, 1],
+                        [0, 1, 0]], dtype=int)
+
+    #set image coordinates with non-zero gray (slice, line and column)
+    row = []
+    col = []
+
+    for len_array_seed in range(0, len(point_y)):
+        row.append(point_y[len_array_seed])
+        col.append(point_x[len_array_seed])
+        array_img_seg[row[len_array_seed], col[len_array_seed]] = 1
+
+    cont = 0
+
+    while cont < len(row):
+        if np.abs(array_imgCR.size-len(point_y)) == cont:
+            break
+        for i in range(-1, 2):
+            if (row[cont] + i > 0) and (row[cont] + i < (array_img_seg.shape[1]-1)):
+                for j in range(-1, 2):
+                    if (col[cont]+j > 0) and (col[cont]+j < (array_img_seg.shape[2]-1)):  # nao ir nas bordas
+                        if (array_imgCR[row[cont] + i, col[cont] + j] <= tom_max) and \
+                           (array_imgCR[row[cont] + i, col[cont] + j] >= tom_min) and \
+                           (array_img_seg[row[cont] + i, col[cont] + j] == 0) and \
+                           (array8u[1 + i, 1 + j] == 1):
+                           
+                           array_img_seg[row[cont] + i, col[cont] + j] = 1
+                           row.append(row[cont] + i)
+                           col.append(col[cont] + j)
+
+        cont += 1
+    return array_img_seg
