@@ -40,17 +40,3 @@ def load_data(datadir, classes, img_size=100):
 
 
 data , label = load_data('dataset/geometric',['circle','square','star','triangle'])
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('-i', '--path_image', default=os.environ.get("PATH_IMAGE"),
-                    help='path image example')
-    ap.add_argument('-i2', '--path_image2', default=os.environ.get("PATH_IMAGE2"),
-                    help='path image example')
-
-
-    args = vars(ap.parse_args())
-
-if __name__ == "__main__":
-    main()
